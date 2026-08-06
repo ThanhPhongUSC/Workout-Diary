@@ -11,6 +11,7 @@ training-data patterns, and anything in this file.
 | Topic | Read |
 | --- | --- |
 | UI, components, styling, dates | `docs/ui.md` |
+| Data fetching, database queries, user data access | `docs/data-fetching.md` |
 
 Check `/docs` at the start of every task — the list above may be out of date, so
 list the directory rather than assuming these are the only files. If a task touches

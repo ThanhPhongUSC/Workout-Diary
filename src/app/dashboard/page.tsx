@@ -1,11 +1,7 @@
-'use client';
-
-import { useState } from 'react';
-import { CalendarIcon, DumbbellIcon } from 'lucide-react';
+import { isValid, parseISO } from 'date-fns';
+import { DumbbellIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import {
   Card,
   CardAction,
@@ -22,11 +18,6 @@ import {
   EmptyTitle,
 } from '@/components/ui/empty';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
   Table,
   TableBody,
   TableCell,
@@ -34,33 +25,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getWorkoutsForDate } from '@/data/workouts';
 import { formatDate, formatTime } from '@/lib/format';
+import { WorkoutDatePicker } from './workout-date-picker';
 
-/** Placeholder rows. Replaced by a real query once data fetching is added. */
-const placeholderWorkouts = [
-  {
-    id: '1',
-    title: 'Push Day',
-    startedAt: new Date(2025, 8, 1, 7, 15),
-    exercises: 5,
-    sets: 18,
-    completed: true,
-  },
-  {
-    id: '2',
-    title: 'Evening Accessories',
-    startedAt: new Date(2025, 8, 1, 18, 40),
-    exercises: 3,
-    sets: 9,
-    completed: false,
-  },
-];
+/** Falls back to today when the `date` search param is missing or unparseable. */
+function resolveDate(value: string | string[] | undefined) {
+  if (typeof value !== 'string') return new Date();
+  const parsed = parseISO(value);
+  return isValid(parsed) ? parsed : new Date();
+}
 
-export default function DashboardPage() {
-  const [date, setDate] = useState(() => new Date());
-  const [open, setOpen] = useState(false);
-
-  const workouts = placeholderWorkouts;
+export default async function DashboardPage({
+  searchParams,
+}: PageProps<'/dashboard'>) {
+  const date = resolveDate((await searchParams).date);
+  const workouts = await getWorkoutsForDate(date);
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 px-6 py-10">
@@ -72,28 +52,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            render={<Button variant="outline" size="lg" />}
-            className="w-48 justify-start font-normal"
-          >
-            <CalendarIcon data-icon="inline-start" />
-            {formatDate(date)}
-          </PopoverTrigger>
-          <PopoverContent align="end" className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              defaultMonth={date}
-              onSelect={(selected) => {
-                if (selected) {
-                  setDate(selected);
-                  setOpen(false);
-                }
-              }}
-            />
-          </PopoverContent>
-        </Popover>
+        <WorkoutDatePicker date={date} />
       </div>
 
       <Card>
@@ -133,20 +92,22 @@ export default function DashboardPage() {
                 {workouts.map((workout) => (
                   <TableRow key={workout.id}>
                     <TableCell className="font-medium">
-                      {workout.title}
+                      {workout.title ?? 'Workout'}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatTime(workout.startedAt)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {workout.exercises}
+                      {workout.exerciseCount}
                     </TableCell>
-                    <TableCell className="text-right">{workout.sets}</TableCell>
+                    <TableCell className="text-right">
+                      {workout.setCount}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Badge
-                        variant={workout.completed ? 'secondary' : 'outline'}
+                        variant={workout.completedAt ? 'secondary' : 'outline'}
                       >
-                        {workout.completed ? 'Completed' : 'In progress'}
+                        {workout.completedAt ? 'Completed' : 'In progress'}
                       </Badge>
                     </TableCell>
                   </TableRow>

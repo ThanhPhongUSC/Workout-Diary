@@ -12,6 +12,8 @@ training-data patterns, and anything in this file.
 | --- | --- |
 | UI, components, styling, dates | `docs/ui.md` |
 | Data fetching, database queries, user data access | `docs/data-fetching.md` |
+| Auth, sessions, sign-in/up, route protection, user ids | `docs/auth.md` |
+| Writes, server actions, forms, validation | `docs/data-mutations.md` |
 
 Check `/docs` at the start of every task — the list above may be out of date, so
 list the directory rather than assuming these are the only files. If a task touches

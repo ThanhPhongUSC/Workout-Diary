@@ -1,7 +1,10 @@
-import { isValid, parseISO } from 'date-fns';
-import { DumbbellIcon } from 'lucide-react';
+import { auth } from '@clerk/nextjs/server';
+import Link from 'next/link';
+import { format, isValid, parseISO } from 'date-fns';
+import { DumbbellIcon, PlusIcon } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardAction,
@@ -39,6 +42,8 @@ function resolveDate(value: string | string[] | undefined) {
 export default async function DashboardPage({
   searchParams,
 }: PageProps<'/dashboard'>) {
+  await auth.protect();
+
   const date = resolveDate((await searchParams).date);
   const workouts = await getWorkoutsForDate(date);
 
@@ -52,7 +57,21 @@ export default async function DashboardPage({
           </p>
         </div>
 
-        <WorkoutDatePicker date={date} />
+        <div className="flex items-center gap-2">
+          <WorkoutDatePicker date={date} />
+          <Button
+            render={
+              <Link
+                href={`/dashboard/workout/new?date=${format(date, 'yyyy-MM-dd')}`}
+              />
+            }
+            nativeButton={false}
+            size="lg"
+          >
+            <PlusIcon data-icon="inline-start" />
+            New workout
+          </Button>
+        </div>
       </div>
 
       <Card>

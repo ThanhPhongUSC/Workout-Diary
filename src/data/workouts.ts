@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { addDays, startOfDay } from 'date-fns';
+import { and, eq } from 'drizzle-orm';
 
 import { db, workouts } from '@/db';
 
@@ -35,6 +36,19 @@ export async function getWorkoutsForDate(date: Date) {
 }
 
 /**
+ * One workout, or undefined when it does not exist or is not the caller's.
+ *
+ * The owner predicate is part of the query, so another user's workout is
+ * indistinguishable from a missing one.
+ */
+export async function getWorkout(id: string) {
+  const { userId } = await auth();
+  if (!userId) return undefined;
+
+  return db.query.workouts.findFirst({ where: { id, userId } });
+}
+
+/**
  * Starts a workout for the signed-in user and returns the new row.
  *
  * `userId` comes from the session, so a workout can only ever be created for
@@ -50,6 +64,28 @@ export async function createWorkout(input: {
   const [workout] = await db
     .insert(workouts)
     .values({ ...input, userId })
+    .returning();
+
+  return workout;
+}
+
+/**
+ * Updates one of the signed-in user's workouts, or returns undefined when the
+ * id is not theirs.
+ *
+ * The owner predicate lives in the statement itself, so this can never write to
+ * another user's row. Input is assumed validated by the action that calls this.
+ */
+export async function updateWorkout(
+  id: string,
+  input: { title: string | null; notes: string | null; startedAt: Date },
+) {
+  const { userId } = await auth.protect();
+
+  const [workout] = await db
+    .update(workouts)
+    .set(input)
+    .where(and(eq(workouts.id, id), eq(workouts.userId, userId)))
     .returning();
 
   return workout;

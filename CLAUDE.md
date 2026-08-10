@@ -10,6 +10,7 @@ training-data patterns, and anything in this file.
 
 | Topic | Read |
 | --- | --- |
+| Routes, URLs, params, links, redirects | `docs/routing.md` |
 | UI, components, styling, dates | `docs/ui.md` |
 | Data fetching, database queries, user data access | `docs/data-fetching.md` |
 | Auth, sessions, sign-in/up, route protection, user ids | `docs/auth.md` |

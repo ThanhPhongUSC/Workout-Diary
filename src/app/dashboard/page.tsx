@@ -111,7 +111,16 @@ export default async function DashboardPage({
                 {workouts.map((workout) => (
                   <TableRow key={workout.id}>
                     <TableCell className="font-medium">
-                      {workout.title ?? 'Workout'}
+                      <Button
+                        render={
+                          <Link href={`/dashboard/workout/${workout.id}`} />
+                        }
+                        nativeButton={false}
+                        variant="link"
+                        className="h-auto p-0 font-medium"
+                      >
+                        {workout.title ?? 'Workout'}
+                      </Button>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatTime(workout.startedAt)}

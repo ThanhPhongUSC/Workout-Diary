@@ -1,5 +1,5 @@
 import { auth } from '@clerk/nextjs/server';
-import { addDays, startOfDay } from 'date-fns';
+import { addDays, startOfDay, startOfWeek } from 'date-fns';
 import { and, eq } from 'drizzle-orm';
 
 import { db, workouts } from '@/db';
@@ -33,6 +33,71 @@ export async function getWorkoutsForDate(date: Date) {
     exerciseCount: entries.length,
     setCount: entries.reduce((total, entry) => total + entry.sets.length, 0),
   }));
+}
+
+/** The signed-in user's latest workouts, newest first, with set counts. */
+export async function getRecentWorkouts(limit = 5) {
+  const { userId } = await auth();
+  if (!userId) return [];
+
+  const rows = await db.query.workouts.findMany({
+    where: { userId },
+    orderBy: { startedAt: 'desc' },
+    limit,
+    with: {
+      entries: {
+        columns: { id: true },
+        with: { sets: { columns: { id: true } } },
+      },
+    },
+  });
+
+  return rows.map(({ entries, ...workout }) => ({
+    ...workout,
+    exerciseCount: entries.length,
+    setCount: entries.reduce((total, entry) => total + entry.sets.length, 0),
+  }));
+}
+
+/**
+ * Headline numbers for the current training week, plus the lifetime session
+ * count.
+ *
+ * Volume is the usual tonnage figure — weight times reps, summed — and is
+ * totalled in kilograms because that is how every set is stored.
+ */
+export async function getTrainingStats() {
+  const { userId } = await auth();
+  if (!userId) {
+    return { sessions: 0, sets: 0, volumeKg: 0, totalSessions: 0 };
+  }
+
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+  const rows = await db.query.workouts.findMany({
+    where: { userId, startedAt: { gte: weekStart } },
+    columns: { id: true },
+    with: {
+      entries: {
+        columns: { id: true },
+        with: { sets: { columns: { reps: true, weightKg: true } } },
+      },
+    },
+  });
+
+  const weekSets = rows.flatMap((workout) =>
+    workout.entries.flatMap((entry) => entry.sets),
+  );
+
+  return {
+    sessions: rows.length,
+    sets: weekSets.length,
+    volumeKg: weekSets.reduce(
+      (total, set) => total + Number(set.weightKg) * set.reps,
+      0,
+    ),
+    totalSessions: await db.$count(workouts, eq(workouts.userId, userId)),
+  };
 }
 
 /**

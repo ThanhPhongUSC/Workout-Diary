@@ -97,8 +97,32 @@ Configured in `components.json`: `base-nova` style, `neutral` base color, RSC on
 CSS variables on, `lucide` icons, alias `@/components/ui`. Do not change these
 without changing every installed component to match.
 
-## Known violation
+## Type and theme
 
-`src/app/page.tsx` is the unmodified create-next-app template. It uses raw markup
-and palette colors and does not follow this document. Replace it when the real home
-page is built; do not copy its patterns.
+Three fonts are loaded in `src/app/layout.tsx` and reached only through Tailwind
+utilities, never by importing the font object again:
+
+- `font-sans` (Inter) — body copy, labels, inputs. The default on `<html>`.
+- `font-heading` (Archivo) — `h1`–`h3`, card titles, and headline numbers. Base
+  styles already apply it with `tracking-tight`; do not restate that.
+- `font-mono` (Geist Mono) — the `eyebrow` utility only.
+
+Two utilities in `globals.css` carry the recurring type treatments. Use them
+rather than rebuilding the same stack of classes:
+
+- `eyebrow` — the small uppercase mono label above a heading or on a stat tile.
+- `metric` — a headline number on a stat tile.
+
+Numerals that sit in a column (times, weights, counts, volumes) take
+`tabular-nums` so they align between rows.
+
+The palette is cool graphite neutrals plus a single warm signal hue. `primary`
+is the only saturated colour in the system: spend it on the main action, an
+active metric, or one accented word in a headline, and let borders, surfaces,
+and text stay neutral. There are no gradients.
+
+Clerk's components are themed once, through `appearance` on `ClerkProvider`,
+with variables pointing at the CSS tokens (`var(--primary)` and friends) so they
+follow the light/dark toggle. Clerk ignores some of those variables — its modal
+surface stays light in both themes — which is a Clerk limitation, not something
+to work around with custom CSS.

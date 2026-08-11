@@ -1,6 +1,9 @@
 import { auth } from '@clerk/nextjs/server';
+import Link from 'next/link';
 import { isValid, parseISO } from 'date-fns';
+import { ArrowLeftIcon } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -25,16 +28,28 @@ export default async function NewWorkoutPage({
   const defaultDate = resolveDate((await searchParams).date);
 
   return (
-    <main className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">New workout</h1>
-        <p className="text-sm text-muted-foreground">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+      <Button
+        render={<Link href="/dashboard" />}
+        nativeButton={false}
+        variant="ghost"
+        size="sm"
+        className="-ml-2 mb-4 text-muted-foreground"
+      >
+        <ArrowLeftIcon data-icon="inline-start" />
+        Back to log
+      </Button>
+
+      <div className="mb-6 border-b border-border pb-6">
+        <p className="eyebrow">New session</p>
+        <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">New workout</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
           Start a session, then add exercises and sets to it.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="border-b">
           <CardTitle>Workout details</CardTitle>
           <CardDescription>
             Everything here is optional except the date.

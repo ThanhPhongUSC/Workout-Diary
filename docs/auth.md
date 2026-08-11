@@ -143,9 +143,20 @@ columns exactly as given.
 
 If any answer is no, the code is wrong.
 
-## Known gap
+## Signed-out UI
 
-`src/app/dashboard/page.tsx` does not call `auth.protect()`. It is safe today
-only because `getWorkoutsForDate` returns `[]` without a session, which renders
-an empty dashboard to a signed-out visitor instead of sending them to sign-in.
-Add the guard when the page is next touched.
+`/` is the only screen a signed-out visitor sees. It reads the session with
+`auth()` rather than `auth.protect()`, because an unauthenticated visitor is the
+expected case there, and redirects a signed-in one to `/dashboard`. Every page
+under `/dashboard` calls `auth.protect()`.
+
+Header entry points wrap a shadcn `Button` in Clerk's own trigger, which keeps
+the app's styling without hand-building an auth control:
+
+```tsx
+<SignInButton mode="modal">
+  <Button variant="ghost" size="sm">
+    Sign in
+  </Button>
+</SignInButton>
+```

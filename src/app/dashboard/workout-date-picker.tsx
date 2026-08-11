@@ -23,7 +23,7 @@ export function WorkoutDatePicker({ date }: { date: Date }) {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger
         render={<Button variant="outline" size="lg" />}
-        className="w-48 justify-start font-normal"
+        className="w-full justify-start font-normal tabular-nums sm:w-48"
       >
         <CalendarIcon data-icon="inline-start" />
         {formatDate(date)}

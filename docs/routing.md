@@ -167,18 +167,15 @@ redirect(`/dashboard?date=${day}`);
 
 If any answer is no, the route is wrong.
 
-## Known gap
+## The root route
 
-`src/app/page.tsx` is still the unmodified create-next-app template. It should be
-a redirect to `/dashboard` and nothing else:
+`/` is the one route outside `/dashboard`, and it holds the signed-out landing
+page. A signed-in visitor never sees it:
 
 ```tsx
-import { redirect } from 'next/navigation';
-
-export default function Home() {
-  redirect('/dashboard');
-}
+const { isAuthenticated } = await auth();
+if (isAuthenticated) redirect('/dashboard');
 ```
 
-Replace it when `/` is next touched. `docs/ui.md` flags the same file for its
-markup; one change settles both.
+That check goes at the top of `src/app/page.tsx` and nowhere else. Do not add
+further top-level routes to sit beside it.

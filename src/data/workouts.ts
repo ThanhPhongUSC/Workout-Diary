@@ -101,16 +101,29 @@ export async function getTrainingStats() {
 }
 
 /**
- * One workout, or undefined when it does not exist or is not the caller's.
+ * One workout with its exercises and sets in logged order, or undefined when it
+ * does not exist or is not the caller's.
  *
  * The owner predicate is part of the query, so another user's workout is
- * indistinguishable from a missing one.
+ * indistinguishable from a missing one. Entries and sets carry no user id and
+ * are reachable only through this filter.
  */
 export async function getWorkout(id: string) {
   const { userId } = await auth();
   if (!userId) return undefined;
 
-  return db.query.workouts.findFirst({ where: { id, userId } });
+  return db.query.workouts.findFirst({
+    where: { id, userId },
+    with: {
+      entries: {
+        orderBy: { position: 'asc' },
+        with: {
+          exercise: true,
+          sets: { orderBy: { position: 'asc' } },
+        },
+      },
+    },
+  });
 }
 
 /**

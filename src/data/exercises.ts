@@ -16,6 +16,24 @@ export type ExerciseHistory = {
 const SESSION_WINDOW = 20;
 
 /**
+ * The exercises the signed-in user can log: the built-in catalog plus their own,
+ * alphabetically.
+ *
+ * A null `userId` is a built-in exercise shared by everyone — the one case where
+ * a row without the caller's id is legitimately theirs to read.
+ */
+export async function getExerciseOptions() {
+  const { userId } = await auth();
+  if (!userId) return [];
+
+  return db.query.exercises.findMany({
+    where: { OR: [{ userId: { isNull: true } }, { userId }] },
+    columns: { id: true, name: true, muscleGroup: true },
+    orderBy: { name: 'asc' },
+  });
+}
+
+/**
  * A per-exercise summary of the signed-in user's recent training, most recently
  * performed first.
  *

@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeftIcon } from 'lucide-react';
+import { ArrowLeftIcon, DumbbellIcon } from 'lucide-react';
 import { z } from 'zod';
 
 import { Badge } from '@/components/ui/badge';
@@ -15,9 +15,29 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { getExerciseOptions } from '@/data/exercises';
 import { getWorkout } from '@/data/workouts';
-import { formatDate, formatTime } from '@/lib/format';
+import { formatDate, formatTime, formatWeight } from '@/lib/format';
+import { AddExerciseForm } from './add-exercise-form';
+import { AddSetForm } from './add-set-form';
+import { DeleteSetButton } from './delete-set-button';
 import { EditWorkoutForm } from './edit-workout-form';
+import { RemoveExerciseButton } from './remove-exercise-button';
 
 export default async function EditWorkoutPage({
   params,
@@ -30,6 +50,8 @@ export default async function EditWorkoutPage({
 
   const workout = await getWorkout(workoutId);
   if (!workout) notFound();
+
+  const exerciseOptions = await getExerciseOptions();
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
@@ -78,6 +100,128 @@ export default async function EditWorkoutPage({
           <EditWorkoutForm workout={workout} />
         </CardContent>
       </Card>
+
+      <section className="mt-6">
+        <div className="mb-4">
+          <p className="eyebrow">Exercises</p>
+          <h2 className="mt-1 text-xl font-semibold">
+            {workout.entries.length} logged
+          </h2>
+          <div className="mt-3">
+            <AddExerciseForm
+              workoutId={workout.id}
+              exercises={exerciseOptions}
+            />
+          </div>
+        </div>
+
+        {workout.entries.length === 0 ? (
+          <Card>
+            <CardContent>
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <DumbbellIcon />
+                  </EmptyMedia>
+                  <EmptyTitle>No exercises yet</EmptyTitle>
+                  <EmptyDescription>
+                    Exercises and their sets appear here once you add them.
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {workout.entries.map((entry, index) => (
+              <Card key={entry.id}>
+                <CardHeader className="border-b">
+                  <CardTitle>{entry.exercise?.name ?? 'Exercise'}</CardTitle>
+                  <CardDescription>
+                    {entry.exercise?.muscleGroup ?? 'general'} ·{' '}
+                    {entry.sets.length} set
+                    {entry.sets.length === 1 ? '' : 's'}
+                  </CardDescription>
+                  <CardAction className="flex items-center gap-1">
+                    <Badge variant="outline" className="rounded-sm tabular-nums">
+                      {index + 1}
+                    </Badge>
+                    <RemoveExerciseButton
+                      workoutId={workout.id}
+                      workoutExerciseId={entry.id}
+                    />
+                  </CardAction>
+                </CardHeader>
+                <CardContent className="px-0">
+                  {entry.sets.length === 0 ? (
+                    <p className="px-(--card-spacing) text-sm text-muted-foreground">
+                      No sets logged for this exercise.
+                    </p>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12 pl-(--card-spacing)">
+                            Set
+                          </TableHead>
+                          <TableHead className="text-right">Weight</TableHead>
+                          <TableHead className="text-right">Reps</TableHead>
+                          <TableHead className="text-right">Type</TableHead>
+                          <TableHead className="w-10 pr-(--card-spacing)" />
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {entry.sets.map((set, setIndex) => (
+                          <TableRow key={set.id}>
+                            <TableCell className="pl-(--card-spacing) text-muted-foreground tabular-nums">
+                              {setIndex + 1}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {formatWeight(Number(set.weightKg), set.unit)}
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums">
+                              {set.reps}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge
+                                variant={
+                                  set.setType === 'warmup'
+                                    ? 'outline'
+                                    : 'secondary'
+                                }
+                                className="rounded-sm"
+                              >
+                                {set.setType}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="pr-(--card-spacing) text-right">
+                              <DeleteSetButton
+                                workoutId={workout.id}
+                                setId={set.id}
+                              />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </CardContent>
+                {entry.notes ? (
+                  <CardContent className="pt-0 text-sm text-muted-foreground">
+                    {entry.notes}
+                  </CardContent>
+                ) : null}
+                <CardContent className="border-t pt-(--card-spacing)">
+                  <AddSetForm
+                    workoutId={workout.id}
+                    workoutExerciseId={entry.id}
+                  />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </section>
     </main>
   );
 }

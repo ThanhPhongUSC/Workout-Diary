@@ -1,5 +1,7 @@
 import { format } from 'date-fns';
 
+import { fromKg, type WeightUnit } from '@/lib/weight';
+
 /** Project-wide date display format, e.g. "1st Sep 2025". */
 export function formatDate(date: Date) {
   return format(date, 'do MMM yyyy');
@@ -25,7 +27,13 @@ export function formatVolume(kg: number) {
   return Math.round(kg).toLocaleString('en-GB');
 }
 
-/** A logged weight, dropping trailing zeros: "60", "62.5", "Bodyweight" at 0. */
-export function formatWeight(kg: number) {
-  return kg === 0 ? 'Bodyweight' : `${Number(kg.toFixed(2))} kg`;
+/**
+ * A logged weight, dropping trailing zeros: "60 kg", "62.5 kg", "Bodyweight" at 0.
+ *
+ * Weights are stored in kilograms; pass the unit the lifter typed to read it
+ * back in that unit.
+ */
+export function formatWeight(kg: number, unit: WeightUnit = 'kg') {
+  if (kg === 0) return 'Bodyweight';
+  return `${Number(fromKg(kg, unit).toFixed(2))} ${unit}`;
 }
